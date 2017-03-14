@@ -3,9 +3,21 @@
 按照vue的语法，写把原先的模版升级了一下，结果机会等于全部重写。  
 
 注意，这只是一个仿vue语法的模版引擎，把对象格式化成html之后，它的使命就完了，不会参入事件，动画之类的功能。  
+功能点1:
+```html
+<script id="tpl" type="text/mytpl">
+<p v-if="ok" >{{data}}</p>
+<p v-else>no data</p>
 
-特点:1.无限嵌套循环
+<p v-if="data" >{{data}}</p>
+<p v-else>no data</p>
+</script>
+```
+```javascript
+var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {data:"hello world"});
+```
 
+功能点:1.无限嵌套循环
 ```html
 <ul>
 	<li v-for="(shop, index1) in bookshop">
