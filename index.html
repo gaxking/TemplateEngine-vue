@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+</head>
+<body>
+	
+</body>
+
+<script id="tpl" type="text/mytpl">
+<ul v-if="bookshop">
+	<li v-for="(shop, index1) in bookshop">
+		<p>{{index1}}:{{shop.name}}</p>
+		<dd v-for="(category, index2) in shop.categories">
+			{{index1}}:{{shop.name}} - {{index2}}:{{category.name}}
+			<dl v-for="(book, index3) in category.books">
+				{{index1}}:{{shop.name}} - {{index2}}:{{category.name}} - {{index3}}:{{book.name}}
+			</dl>
+		</dd>
+	</li>
+</ul>
+<p v-else>no data</p>
+</script>
+
+<script src="TemplateEngine.js"></script>
+<script>
+var TemplateEngine = new TemplateEngine("{{","}}");
+
+var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {
+	bookshop:[
+		{
+			name:"新华书店", 
+			categories:[
+				{
+					name:"九年义务教育",
+					books:[
+						{
+							name:"语文书",
+							pages:800
+						},
+						{
+							name:"数学书",
+							pages:300,
+							author:"教育局"
+						},
+						{
+							name:"英语书",
+							pages:300,
+							wordCount:"10万"
+						}
+					]
+				},
+				{
+					name:"高中",
+					books:[
+						{
+							name:"五年高考",
+							pages:500
+						},
+						{
+							name:"三年模拟",
+							pages:300
+						}
+					]
+				}
+			]
+		},
+		{
+			name:"诚品书店", 
+			categories:[
+				{
+					name:"web编程",
+					books:[
+						{
+							name:"html入门到精通",
+							pages:800
+						},
+						{
+							name:"javascript权威指南",
+							pages:300,
+							author:"淘宝前端团队"
+						},
+						{
+							name:"css禅意花园",
+							pages:300,
+						}
+					]
+				},
+				{
+					name:"中国历史",
+					books:[
+						{
+							name:"近代史",
+							pages:500
+						},
+						{
+							name:"石器时代",
+							pages:300
+						}
+					]
+				}
+			]
+		}
+	]
+});
+
+document.body.innerHTML = tpl;
+console.log(tpl);
+
+</script>
+</html>
