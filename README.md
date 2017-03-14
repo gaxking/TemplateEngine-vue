@@ -5,6 +5,21 @@
 注意，这只是一个仿vue语法的模版引擎，把对象格式化成html之后，它的使命就完了，不会参入事件，动画之类的功能。  
 
 特点:1.无限嵌套循环
+
+```html
+<ul>
+	<li v-for="(shop, index1) in bookshop">
+		<p>{{index1}}:{{shop.name}}</p>
+		<dd v-for="(category, index2) in shop.categories">
+			{{index1}}:{{shop.name}} - {{index2}}:{{category.name}}
+			<dl v-for="(book, index3) in category.books">
+				{{index1}}:{{shop.name}} - {{index2}}:{{category.name}} - {{index3}}:{{book.name}}
+			</dl>
+		</dd>
+	</li>
+</ul>
+```
+
 ```javascript
 var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {
 	bookshop:[
