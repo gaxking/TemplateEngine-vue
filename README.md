@@ -4,7 +4,7 @@
 
 注意，这只是一个仿vue语法的模版引擎，把对象格式化成html之后，它的使命就完了，不会参入事件，动画之类的功能。  
 功能点1: 条件判断  
-v-if/v-else-if/v-else
+v-if/v-else-if/v-else/v-show
 
 ```html
 <script id="tpl" type="text/mytpl">
@@ -26,6 +26,8 @@ v-if/v-else-if/v-else
 <div v-else>
   Not A/B/C
 </div>
+
+<h1 v-show="0">{{data}}</h1>
 </script>
 ```
 ```javascript
