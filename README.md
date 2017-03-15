@@ -1,9 +1,11 @@
 # TemplateEngine
-由于vue的语法确实简单，而且用的人越来约多，  
+由于vue的语法确实简单，而且用的人越来越多，
 按照vue的语法，写把原先的模版升级了一下，结果机会等于全部重写。  
 
 注意，这只是一个仿vue语法的模版引擎，把对象格式化成html之后，它的使命就完了，不会参入事件，动画之类的功能。  
-功能点1:
+功能点1: 条件判断  
+v-if/v-else-if/v-else
+
 ```html
 <script id="tpl" type="text/mytpl">
 <p v-if="ok" >{{data}}</p>
