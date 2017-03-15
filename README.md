@@ -32,7 +32,9 @@ v-if/v-else-if/v-else
 var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {data:"hello world",type:"C"});
 ```
 
-功能点:1.无限嵌套循环
+功能点:1.无限嵌套循环  
+item in items,  
+同时支撑索引  (item, index) in items 
 ```html
 <ul>
 	<li v-for="(shop, index1) in bookshop">
