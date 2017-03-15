@@ -23,7 +23,7 @@ var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {
 });
 ```
 
-功能点1: 条件判断  
+功能点2: 条件判断  
 v-if/v-else-if/v-else/v-show
 
 ```html
@@ -54,7 +54,7 @@ v-if/v-else-if/v-else/v-show
 var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {data:"hello world",type:"C"});
 ```
 
-功能点:1.无限嵌套循环  
+功能点3:无限嵌套循环  
 item in items,  
 同时支撑索引  (item, index) in items 
 ```html
