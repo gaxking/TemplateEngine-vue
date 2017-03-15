@@ -11,10 +11,23 @@
 
 <p v-if="data" >{{data}}</p>
 <p v-else>no data</p>
+
+<div v-if="type === 'A'">
+  A
+</div>
+<div v-else-if="type === 'B'">
+  B
+</div>
+<div v-else-if="type === 'C'">
+  C
+</div>
+<div v-else>
+  Not A/B/C
+</div>
 </script>
 ```
 ```javascript
-var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {data:"hello world"});
+var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {data:"hello world",type:"C"});
 ```
 
 功能点:1.无限嵌套循环
