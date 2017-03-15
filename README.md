@@ -2,7 +2,27 @@
 由于vue的语法确实简单，而且用的人越来越多，
 按照vue的语法，写把原先的模版升级了一下，结果机会等于全部重写。  
 
-注意，这只是一个仿vue语法的模版引擎，把对象格式化成html之后，它的使命就完了，不会参入事件，动画之类的功能。  
+注意，这只是一个仿vue语法的模版引擎，把对象格式化成html之后，它的使命就完了，不会参入事件，动画之类的功能。 
+
+功能点1: Class 与 Style 绑定  
+```html
+<div class="static" v-bind:class="{ active: isActive, 'text-danger': hasError }"></div>
+
+<div v-bind:class="{ active: isActive }">active</div>
+
+<div v-bind:style="styleObject"></div>
+```
+```javascript
+var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {
+	isActive:true, 
+	hasError: false,  
+	styleObject: {
+		color: 'red',
+		fontSize: '13px'   //不能用font-size,否则new Function编译报错
+  }
+});
+```
+
 功能点1: 条件判断  
 v-if/v-else-if/v-else/v-show
 
