@@ -9,18 +9,14 @@
 </body>
 
 <script id="tpl" type="text/mytpl">
-<ul v-if="bookshop">
+
+<ul>
 	<li v-for="(shop, index1) in bookshop">
-		<p>{{index1}}:{{shop.name}}</p>
-		<dd v-for="(category, index2) in shop.categories">
-			{{index1}}:{{shop.name}} - {{index2}}:{{category.name}}
-			<dl v-for="(book, index3) in category.books">
-				{{index1}}:{{shop.name}} - {{index2}}:{{category.name}} - {{index3}}:{{book.name}}
-			</dl>
-		</dd>
+		<h1 v-if="index1 === 0">{{shop.name}}</h1>
+		<h1 v-else>aaaa</h1>
 	</li>
 </ul>
-<p v-else>no data</p>
+
 </script>
 
 <script src="TemplateEngine.js"></script>
@@ -28,6 +24,12 @@
 var TemplateEngine = new TemplateEngine("{{","}}");
 
 var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {
+	isActive:true, 
+	hasError: false,  
+	styleObject: {
+		color: 'red',
+		fontSize: '13px'   //不能用font-size,否则new Function编译报错
+	},
 	bookshop:[
 		{
 			name:"新华书店", 
