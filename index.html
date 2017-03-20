@@ -12,10 +12,34 @@
 
 <ul>
 	<li v-for="(shop, index1) in bookshop">
-		<h1 v-if="index1 === 0">{{shop.name}}</h1>
-		<h1 v-else>aaaa</h1>
+
+		<p v-if="0" >{{data}}</p>
+		<p v-else-if="0" >abc</p>
+		<p v-else-if="1" >zz</p>
+		<p v-else >{{data}}</p>
+
+		<dd v-for="(category, index2) in shop.categories">
+			{{index1}}:{{shop.name}} - {{index2}}:{{category.name}}
+		</dd>
+
+		<h1 v-show="0">{{data}}</h1>
+
+		<div v-if="type === 'A'">
+		  A
+		</div>
+		<div v-else-if="type === 'B'">
+		  B
+		</div>
+		<div v-else-if="type === 'C'">
+		  C
+		</div>
+		<div v-else>
+		  Not A/B/C
+		</div>
 	</li>
 </ul>
+
+
 
 </script>
 
@@ -24,6 +48,7 @@
 var TemplateEngine = new TemplateEngine("{{","}}");
 
 var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {
+	data:"hello world",type:"C",
 	isActive:true, 
 	hasError: false,  
 	styleObject: {

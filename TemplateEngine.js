@@ -7,12 +7,12 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 		vExpList = /<(\w+)[^((\1|\/)>)]*\s(v-for)=(["'])(.+?)\3.*?(\1|\/)>(<([a-z]+)[^((\7|\/)>)]*\s(v-else).*?(\7|\/)>)?/g,
 		vExpListTag = /\s*((\w+)|\(\s*(\w+)\s*,\s*(\w+)\s*\))\s+in\s+(.+)/,
 		vExpListVal = /\.|\[["']|\[(?=\d)|['"]?\]\[["']?|['"]?\]\.|['"]?\]/,
-		vExpHasVariable = /\[([^\d]+)\]/g;
-	vExpCheckIsPath = /[^\.\w\s\[\]]/g;
-	vExpBindClass = /<(\w+)[^((\1|\/)>)]*?\s(v-bind)\s*:\s*(class)\s*=(["'])(.*?)\4.*?(\1|\/)>/g;
-	vExpBindStyle = /<(\w+)[^((\1|\/)>)]*?\s(v-bind)\s*:\s*(style)\s*=(["'])(.*?)\4.*?(\1|\/)>/g;
-	vExpGetClass = /\sclass\s*=\s*(["'])\s*(.*?)\s*\1/i;
-	vExpGetStyles = /\sstyle\s*=\s*(["'])\s*(.*?)\s*\1/i;
+		vExpHasVariable = /\[([^\d]+)\]/g,
+		vExpCheckIsPath = /[^\.\w\s\[\]]/g,
+		vExpBindClass = /<(\w+)[^((\1|\/)>)]*?\s(v-bind)\s*:\s*(class)\s*=(["'])(.*?)\4.*?(\1|\/)>/g,
+		vExpBindStyle = /<(\w+)[^((\1|\/)>)]*?\s(v-bind)\s*:\s*(style)\s*=(["'])(.*?)\4.*?(\1|\/)>/g,
+		vExpGetClass = /\sclass\s*=\s*(["'])\s*(.*?)\s*\1/i,
+		vExpGetStyles = /\sstyle\s*=\s*(["'])\s*(.*?)\s*\1/i;
 
 
 	//配置对象
@@ -56,7 +56,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 		if(str.substr(-2)===",\n")str = str.substr(0,str.length-2);
 		return str;
 	}
-	
+
 	//创建具有options对象的new Function
 	function creatFun(val){
 		var obj;
@@ -95,7 +95,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 			var lastIndex = Exp.lastIndex,
 				realListTpl = vueTpl(match);
 
-			html = html.slice(0, match.index) + realListTpl + html.slice(html.indexOf(match[0]) + match[0].length);
+			html = html.slice(0, match.index) + realListTpl + html.slice(match.index + match[0].length);
 			Exp.lastIndex = lastIndex - match[0].length + realListTpl.length;
 		}
 		return html;
@@ -105,7 +105,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 	function getDepTarget(str) {
 		var keys = str.split(vExpListVal);
 		if(keys[keys.length-1] === "")keys.pop();
-	
+
 		var index = 0, target = options;
 
 		while(index < keys.length) {
@@ -154,12 +154,14 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 				break;
 		}
 
+
 		function getForListHtml(){
 			var tmp = val.match(vExpListTag),
 				item = tmp[2]?{name:tmp[2]} : {name:tmp[3], index:tmp[4]},
 				items = tmp[5];
 
 			items = getRealPath(items);
+
 
 			var itemsKey = items.split(vExpListVal), key, target = options;
 
@@ -170,76 +172,77 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 			for(var i = 0, index = 1, l = target.length; i<l; i++) {
 				pathMap[item.name] = items + "["+i+"]";
 
-				var sampleArr = []
-
-				vExpIf.lastIndex = 0;
-				var matchif, matchList, eleRealIf = '', eleRealTplTmp = eleRealTpl, cursor = 0;
-
-				var IfBeginStrIndex = eleRealTpl.search(vExpIf);
-				if(IfBeginStrIndex>-1){
-					var isIf = false;
-					if(eleRealTpl.slice(0, IfBeginStrIndex).match(">")===null){
-						isIf = true;
-					}else{
-						vExpList.lastIndex = 0;
-						var matchCheckList = vExpList.exec(eleRealTplTmp);
-
-
-						if(!matchCheckList || IfBeginStrIndex < matchCheckList.index || matchCheckList.index+matchCheckList[0].length < IfBeginStrIndex+1){
-							isIf = true;
-						}
-					}
-
-					if(isIf){
-						while(matchif = vExpIf.exec(eleRealTpl)) {
-							var tmpListIndex = {};
-							tmpListIndex[item.index] = i;
-
-							var lastIndex = vExpIf.lastIndex;
-							vExpElse.lastIndex = 0;
-							var realListTplIf = vueTpl(matchif, pathMap, tmpListIndex),
-								matchElse = vExpElse.exec(eleRealTpl);
-							vExpIf.lastIndex = lastIndex;
-
-							if(matchif.index>cursor){
-								sampleArr.push({str:eleRealTpl.slice(cursor, matchif.index)});
-							}
-							sampleArr.push({str:getRealTpl(realListTplIf),flag:"if"});
-
-							cursor = matchif.index + matchif[0].length;
-							cursor += matchElse?matchElse[0].length:0;
-						}
-					}
+				//创建索引变量
+				if(item.index){
+					listIndex = listIndex || {};
+					listIndex[item.index] = i;
 				}
 
-				sampleArr.push({str:eleRealTpl.slice(cursor)});
-				for(var s = 0; s < sampleArr.length; s++) {
-					var sample = sampleArr[s];
-					if(sample.flag == "if"){
-						eleReal += sample.str;
-					}else if(!sample.flag){
-						var ListBeginStrIndex = sample.str.search(vExpList);
-						if(ListBeginStrIndex>-1){
-							cursor = 0;
-							vExpList.lastIndex = 0;
-							while(matchList = vExpList.exec(sample.str)) {
-								var lastIndex = vExpList.lastIndex;
-								var realListTpl = vueTpl(matchList, pathMap);
+				var eleRealItem = getInListHtml();
 
-								eleReal += getRealTpl(sample.str.slice(cursor, matchList.index));
-								eleReal += realListTpl;
-								cursor = matchList.index + matchList[0].length;
-								vExpList.lastIndex = lastIndex;
-							}
+				var match;  //v-for 中含有v-if todu
+				vExpList.lastIndex = 0;
+				while(match = vExpList.exec(eleRealItem)) {
+					var lastIndex = vExpList.lastIndex;
+					var realListTpl = vueTpl(match, pathMap, listIndex);
+					vExpList.lastIndex = lastIndex;
 
-							eleReal += sample.str.slice(cursor);
-						}else{
-							eleReal += getRealTpl(sample.str);
-						}
-					}
+					eleRealItem =  eleRealItem.slice(0, match.index) + getRealTpl(realListTpl) + eleRealItem.slice(match.index + match[0].length);
 				}
+
+				eleReal += getRealTpl(eleRealItem);
 			}
+
 			return eleReal;
+
+
+			//list中循环处理
+			function getInListHtml(){
+				var inListExpArr = [vExpIf, vExpShow, vExpBindClass, vExpBindStyle];
+				var sampleTpl = eleRealTpl, match;
+
+				for(var x = 0; x < inListExpArr.length; x++) {
+					inListExpArr[x].lastIndex = 0;
+					var BeginStrIndex = eleRealTpl.search(inListExpArr[x]),
+						cursor = 0;
+
+					if(BeginStrIndex>-1){
+						var isMatch = false;
+
+						//判断是否在v-for标签上有匹配 如<p v-for="x in xx" v-if="1">
+						if(eleRealTpl.slice(0, BeginStrIndex).match(">")===null){
+							isMatch = true;
+						}else{
+							//判断是否有下一级循环
+							vExpList.lastIndex = 0;
+							var matchCheckList = vExpList.exec(eleRealTpl);
+
+							//检查是否有v-for标签以外的匹配
+							if(!matchCheckList || BeginStrIndex < matchCheckList.index || matchCheckList.index+matchCheckList[0].length < BeginStrIndex+1){
+								isMatch = true;
+							}
+						}
+
+						if(isMatch){
+							var _sampleTpl = '';
+							while(match = inListExpArr[x].exec(sampleTpl)) {
+								//获取真实字符串
+								var realInList = vueTpl(match, pathMap, listIndex);
+
+								//重新指向正确的lastIndex,特别是在v-else-if的时候帮助找到对应的val
+								inListExpArr[x].lastIndex = match.index + realInList.length;
+
+			
+								sampleTpl = sampleTpl.slice(0, match.index) + realInList + sampleTpl.slice(match.index + match[0].length);
+							}
+
+							sampleTpl = _sampleTpl + sampleTpl.slice(cursor);
+						}
+					}
+				}
+
+				return sampleTpl;
+			}
 		}
 
 		function getShow(){
@@ -325,7 +328,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 				if(val.match(vExpCheckIsPath)) {
 					val = creatFun(val, pathMap, listIndex);
 				}else{
-					val = listIndex?listIndex.val:getDepTarget(getRealPath(val));
+					val = listIndex&&listIndex[val]?listIndex[val]:getDepTarget(getRealPath(val));
 				}
 			}
 
@@ -339,6 +342,8 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 				}
 			}else if(hasElse){
 				vExpIf.lastIndex = 0;
+
+				//先搜索v-else-if 否则用 else
 				matchElse = vExpIf.exec(eleRealTpl) || matchElse;
 
 				eleReal = vueTpl(matchElse);
@@ -346,23 +351,24 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 				eleReal = '';
 			}
 
-			return eleReal;
+			return getRealTpl(eleReal);
 		}
 
 		function getRealTpl(tpl){
 			return tpl.replace(re, function(){
 				var match = arguments[1].split(vExpListVal);
 
+				//是否在存在循环路径里
 				if(pathMap[match[0]]!==undefined){
 					match[0] = pathMap[match[0]];
 					return getDepTarget(match.join("."));
-				}else if(item&&item.name&&match[0]==item.name){
-					match[0] = items;
-					return getDepTarget(match.shift() + '['+i+'].' + match.join("."));
-				}else if(listIndex){
-					return listIndex.val;
+			//	}else if(item&&item.name&&match[0]==item.name){    //todu
+			//		match[0] = items;
+			//		return getDepTarget(match.shift() + '['+i+'].' + match.join("."));
+				}else if(listIndex&&listIndex[match[0]] !== undefined){
+					return listIndex[match[0]];
 				}else{
-					return match.join(".");
+					return getDepTarget(match.join("."));
 				}
 			});
 		}
