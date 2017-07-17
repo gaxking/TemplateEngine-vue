@@ -185,9 +185,9 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 				while(match = vExpList.exec(eleRealItem)) {
 					var lastIndex = vExpList.lastIndex;
 					var realListTpl = vueTpl(match, pathMap, listIndex);
-					vExpList.lastIndex = lastIndex;
+					vExpList.lastIndex = match.index + realListTpl.length;
 
-					eleRealItem =  eleRealItem.slice(0, match.index) + getRealTpl(realListTpl) + eleRealItem.slice(match.index + match[0].length);
+					eleRealItem =  eleRealItem.slice(0, match.index) + realListTpl + eleRealItem.slice(match.index + match[0].length);
 				}
 
 				eleReal += getRealTpl(eleRealItem);
@@ -224,16 +224,26 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 						}
 
 						if(isMatch){
-							var _sampleTpl = '';
+							var _sampleTpl = '', dealNextElse = 2; //0:不处理 1:处理 2:非v-if
 							while(match = inListExpArr[x].exec(sampleTpl)) {
-								//获取真实字符串
-								var realInList = vueTpl(match, pathMap, listIndex);
+								//上一个循环已经查到合适的v-if，跳过剩下的v-else-if/v-else
+								if((match[2] === 'v-if' || match[2] === 'v-else-if' )&& dealNextElse === 0){
+									inListExpArr[x].lastIndex = match.index + match[0].length;
+									sampleTpl = sampleTpl.slice(0, match.index) + sampleTpl.slice(match.index + match[0].length);
+									dealNextElse = 2;
+								}else{
+									//获取真实字符串
+									var realInList = vueTpl(match, pathMap, listIndex);
 
-								//重新指向正确的lastIndex,特别是在v-else-if的时候帮助找到对应的val
-								inListExpArr[x].lastIndex = match.index + realInList.length;
+									//重新指向正确的lastIndex,特别是在v-else-if的时候帮助找到对应的val
+									inListExpArr[x].lastIndex = match.index + realInList.length;
 
-			
-								sampleTpl = sampleTpl.slice(0, match.index) + realInList + sampleTpl.slice(match.index + match[0].length);
+									if(match[2] === 'v-if' || match[2] == 'v-else-if') {
+										dealNextElse = realInList === ''?1:0;
+									}
+
+									sampleTpl = sampleTpl.slice(0, match.index) + realInList + sampleTpl.slice(match.index + match[0].length);
+								}
 							}
 
 							sampleTpl = _sampleTpl + sampleTpl.slice(cursor);
@@ -318,6 +328,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 		}
 
 		function getIf(){
+			debugger;
 			if(val==='true'){
 				val = true;
 			}else if(val==='false'){

@@ -12,8 +12,11 @@
 
 <ul>
 	<li v-for="(shop, index1) in bookshop">
+		<dd v-if="index1==0" v-for="(category, index2) in shop.categories">
+			{{index1}}:{{shop.name}} -- {{index2}}:{{category.name}}
+		</dd>
 
-		<p v-if="0" >{{data}}</p>
+		<p v-if="index1 == 0" >{{data}}</p>
 		<p v-else-if="0" >abc</p>
 		<p v-else-if="1" >zz</p>
 		<p v-else >{{data}}</p>
@@ -22,7 +25,7 @@
 			{{index1}}:{{shop.name}} - {{index2}}:{{category.name}}
 		</dd>
 
-		<h1 v-show="0">{{data}}</h1>
+		<h1 v-show="1">{{data}}</h1>
 
 		<div v-if="type === 'A'">
 		  A
@@ -36,6 +39,10 @@
 		<div v-else>
 		  Not A/B/C
 		</div>
+
+		<dd v-for="(category, index2) in shop.categories">
+			{{index1}}:{{shop.name}} - {{index2}}:{{category.name}}
+		</dd>
 	</li>
 </ul>
 
