@@ -1,19 +1,18 @@
 var TemplateEngine = function(leftFlag, rightFlag) {
 
 	var re = new RegExp(leftFlag + "\\s*(.+?)\\s*" + rightFlag, "g"),
-		vExpIf = /<(\w+)[^((\1|\/)>)]*\s(v-if|v-else-if)=(["'])(.*?)\3.*?(\1|\/)>(<(\w+)[^((\7|\/)>)]*\s(v-else-if|v-else).*?(\7|\/)>)?/g,
-		vExpShow = /<(\w+)[^((\1|\/)>)]*\s(v-show)=(["'])(.*?)\3.*?(\1|\/)>/g,
-		vExpElse = /<(\w+)[^((\1|\/)>)]*\s(v-else).*?(\1|\/)>/g,
-		vExpList = /<(\w+)[^((\1|\/)>)]*\s(v-for)=(["'])(.+?)\3.*?(\1|\/)>(<([a-z]+)[^((\7|\/)>)]*\s(v-else).*?(\7|\/)>)?/g,
-		vExpListTag = /\s*((\w+)|\(\s*(\w+)\s*,\s*(\w+)\s*\))\s+in\s+(.+)/,
-		vExpListVal = /\.|\[["']|\[(?=\d)|['"]?\]\[["']?|['"]?\]\.|['"]?\]/,
-		vExpHasVariable = /\[([^\d]+)\]/g,
-		vExpCheckIsPath = /[^\.\w\s\[\]]/g,
-		vExpBindClass = /<(\w+)[^((\1|\/)>)]*?\s(v-bind)\s*:\s*(class)\s*=(["'])(.*?)\4.*?(\1|\/)>/g,
-		vExpBindStyle = /<(\w+)[^((\1|\/)>)]*?\s(v-bind)\s*:\s*(style)\s*=(["'])(.*?)\4.*?(\1|\/)>/g,
-		vExpGetClass = /\sclass\s*=\s*(["'])\s*(.*?)\s*\1/i,
-		vExpGetStyles = /\sstyle\s*=\s*(["'])\s*(.*?)\s*\1/i;
-
+		vExpIf = /<(\w+)[^((\1|\/)>)]*\s(v-if|v-else-if)=(["'])(.*?)\3.*?(\1|\/)>(<(\w+)[^((\7|\/)>)]*\s(v-else-if|v-else).*?(\7|\/)>)*/g,//匹配 v-if
+		vExpShow = /<(\w+)[^((\1|\/)>)]*\s(v-show)=(["'])(.*?)\3.*?(\1|\/)>/g,//匹配 v-show
+		vExpElse = /<(\w+)[^((\1|\/)>)]*\s(v-else).*?(\1|\/)>/g,//匹配 v-else
+		vExpList = /<(\w+)[^((\1|\/)>)]*\s(v-for)=(["'])(.+?)\3.*?(\1|\/)>(<([a-z]+)[^((\7|\/)>)]*\s(v-else).*?(\7|\/)>)?/g,//匹配 v-list
+		vExpListTag = /\s*((\w+)|\(\s*(\w+)\s*,\s*(\w+)\s*\))\s+in\s+(.+)/,//匹配for循环用的 item 和 index
+		vExpListVal = /\.|\[["']|\[(?=\d)|['"]?\]\[["']?|['"]?\]\.|['"]?\]/, //用于分割变量 如 data.shop 或 data['shop'] 之类切成 ['data', 'shop']
+		vExpHasVariable = /\[([^\d]+)\]/g, //检测引用是否包含变量如 data[index]
+		vExpCheckIsPath = /[^\.\w\s\[\]]/g, //检测是否一个路径 data['shop'] 或 data.shop
+		vExpBindClass = /<(\w+)[^((\1|\/)>)]*?\s(v-bind)\s*:\s*(class)\s*=(["'])(.*?)\4.*?(\1|\/)>/g, //匹配 v-class
+		vExpBindStyle = /<(\w+)[^((\1|\/)>)]*?\s(v-bind)\s*:\s*(style)\s*=(["'])(.*?)\4.*?(\1|\/)>/g, //匹配 v-style
+		vExpGetClass = /\sclass\s*=\s*(["'])\s*(.*?)\s*\1/i, //匹配 v-class中的值
+		vExpGetStyles = /\sstyle\s*=\s*(["'])\s*(.*?)\s*\1/i; //匹配 v-style中的值
 
 	//配置对象
 	var options;
@@ -37,9 +36,15 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 					str+= "\n},\n";
 					break;	
 				case '[object String]':
-					str+= isFirst? key + " = \"" : isArray? "\"" : key + ":\"";
-					str+= source[key];
-					str+= "\",\n";
+					if(source[key].slice(0,7)==='[vchar]'&&source[key].slice(-8)==='[/vchar]') {
+						str+= isFirst? key + " = " : isArray? "" : key + ":";
+						str+= source[key].slice(7,-8);
+						str+= ",\n";
+					}else{
+						str+= isFirst? key + " = \"" : isArray? "\"" : key + ":\"";
+						str+= source[key];
+						str+= "\",\n";
+					}
 					break;
 				case '[object Boolean]':
 					str+= isFirst? key + " = " : isArray? "" : key + ":";
@@ -62,7 +67,12 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 		var obj;
 		if(arguments.length>1) {
 			var other = {};
-			for(var i = 1; i < arguments.length; i++){
+
+			for(var vchar in arguments[1]){
+				other[vchar] = '[vchar]'+arguments[1][vchar]+'[/vchar]';
+			}
+
+			for(var i = 2; i < arguments.length; i++){
 				for(var z in arguments[i]){
 					other[z] = arguments[i][z];
 				}
@@ -91,6 +101,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 
 	//格式化html
 	function formatHtml(Exp, html, options){
+		var match;
 		while(match = Exp.exec(html)) {
 			var lastIndex = Exp.lastIndex,
 				realListTpl = vueTpl(match);
@@ -115,9 +126,11 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 		return target;
 	}
 
-	function vueTpl(matchInfo, pathMap, listIndex){
+	//处理入口
+	function vueTpl(matchInfo, pathMap, fatherListIndex){
 		var ele = matchInfo[0],
-			tag = matchInfo[2];
+			tag = matchInfo[2],
+			pathMap = pathMap || {};
 
 		if(matchInfo[8]){
 			var hasElse = true;
@@ -125,7 +138,8 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 			var isElseIf = matchInfo[8].toLowerCase() === 'v-else-if'?true:false;
 		}
 
-		var val,pathMap = pathMap || {}, indexForBind,
+		var val, indexForBind,
+			listIndex = fatherListIndex?Object.assign({}, fatherListIndex):{},
 			eleRealTpl = ele.replace(new RegExp("\\s"+ tag +"(\s*:\s*([a-zA-Z]+)\s*)?(=([\"'])(.*?)\\4)?"), function(v){
 				val = arguments[5];
 				indexForBind = ele.indexOf(arguments[0]);
@@ -153,10 +167,12 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 				eleReal = getBind();
 				break;
 		}
+		return eleReal;
 
 
 		function getForListHtml(){
 			var tmp = val.match(vExpListTag),
+				match,
 				item = tmp[2]?{name:tmp[2]} : {name:tmp[3], index:tmp[4]},
 				items = tmp[5];
 
@@ -169,12 +185,12 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 				target = target[key];
 			}
 
+			var eleStrTpl = "";
 			for(var i = 0, index = 1, l = target.length; i<l; i++) {
 				pathMap[item.name] = items + "["+i+"]";
 
 				//创建索引变量
 				if(item.index){
-					listIndex = listIndex || {};
 					listIndex[item.index] = i;
 				}
 
@@ -190,13 +206,23 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 					eleRealItem =  eleRealItem.slice(0, match.index) + realListTpl + eleRealItem.slice(match.index + match[0].length);
 				}
 
-				eleReal += getRealTpl(eleRealItem);
+				vExpIf.lastIndex = 0;
+				while(match = vExpIf.exec(eleRealItem)) {
+					var lastIndex = vExpIf.lastIndex;
+					var realListTpl = vueTpl(match, pathMap, listIndex);
+					vExpIf.lastIndex = match.index + realListTpl.length;
+
+					eleRealItem =  eleRealItem.slice(0, match.index) + realListTpl + eleRealItem.slice(match.index + match[0].length);
+				}
+
+				eleStrTpl += getRealTpl(eleRealItem);
 			}
 
-			return eleReal;
+			return eleStrTpl;
 
 
-			//list中循环处理
+
+			//list中循环处理 主要解决 v-for 标签上包含其它标签比如 v-if v-bind v-style 的问题
 			function getInListHtml(){
 				var inListExpArr = [vExpIf, vExpShow, vExpBindClass, vExpBindStyle];
 				var sampleTpl = eleRealTpl, match;
@@ -256,7 +282,8 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 		}
 
 		function getShow(){
-			val = getDepTarget(val);
+			val = checkVal(val);
+
 			if(!val){
 				eleRealTpl = eleRealTpl.slice(0, indexForBind) + ' style="display:none;"' + eleRealTpl.slice(indexForBind);
 			}
@@ -265,7 +292,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 		}
 
 		function getBind(){
-			var key = match[3].toLowerCase() ,styleStr = ' style="',classStr = ' class="';
+			var key = matchInfo[3].toLowerCase() ,styleStr = ' style="',classStr = ' class="';
 			if(val.match(/\{[^\}]+\}/)){
 				val = creatFun(val, pathMap, listIndex);
 			}else{
@@ -328,20 +355,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 		}
 
 		function getIf(){
-			debugger;
-			if(val==='true'){
-				val = true;
-			}else if(val==='false'){
-				val = false;
-			}else if(val.match(/^[-+]?\d+(\.\d+)?$/)){
-				val = +val;
-			}else{
-				if(val.match(vExpCheckIsPath)) {
-					val = creatFun(val, pathMap, listIndex);
-				}else{
-					val = listIndex&&listIndex[val]?listIndex[val]:getDepTarget(getRealPath(val));
-				}
-			}
+			val = checkVal(val);
 
 			vExpElse.lastIndex = 0;
 			var matchElse = vExpElse.exec(eleRealTpl);
@@ -362,20 +376,20 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 				eleReal = '';
 			}
 
-			return getRealTpl(eleReal);
+			return eleReal;
 		}
 
+		//把花括号内的变量转成实际的值如 <h1>{{data}}</h1> 转为 <h1>hello world</h1>
 		function getRealTpl(tpl){
 			return tpl.replace(re, function(){
 				var match = arguments[1].split(vExpListVal);
 
-				//是否在存在循环路径里
-				if(pathMap[match[0]]!==undefined){
+				//判断是否三元表达式
+				if(arguments[1].search(/[?:]/)!==-1) {
+					return creatFun(arguments[1], pathMap, listIndex);
+				}else if(pathMap[match[0]]!==undefined){//是否在存在循环路径里
 					match[0] = pathMap[match[0]];
 					return getDepTarget(match.join("."));
-			//	}else if(item&&item.name&&match[0]==item.name){    //todu
-			//		match[0] = items;
-			//		return getDepTarget(match.shift() + '['+i+'].' + match.join("."));
 				}else if(listIndex&&listIndex[match[0]] !== undefined){
 					return listIndex[match[0]];
 				}else{
@@ -384,6 +398,7 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 			});
 		}
 
+		//把实际相对变量转化成绝对路径的变量 比如 category.books 转为 bookshop[0].categories[0].books
 		function getRealPath(items){
 			items = items.replace(/^[^.\[]+/, function(val){
 				return pathMap[val]?pathMap[val]:val;
@@ -400,9 +415,28 @@ var TemplateEngine = function(leftFlag, rightFlag) {
 			return items;
 		}
 
+		//检查括号内的值true or false
+		function checkVal(val) {
+			if(val==='true'){
+				val = true;
+			}else if(val==='false'){
+				val = false;
+			}else if(val.match(/^[-+]?\d+(\.\d+)?$/)){
+				val = +val;
+			}else{
+				if(val.match(vExpCheckIsPath)) {
+					val = creatFun(val, pathMap, listIndex);
+				}else{
+					val = listIndex&&listIndex[val]?listIndex[val]:getDepTarget(getRealPath(val));
+				}
+			}
+			return val;
+		}
+
 		return eleReal;
 	}
 
+	//闭包弄个单例
 	return function(html, data) {
 		html = html.replace(/[\r\t\n]/g, '');
 		options = data;

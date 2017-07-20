@@ -9,11 +9,12 @@
 </body>
 
 <script id="tpl" type="text/mytpl">
-
 <ul>
 	<li v-for="(shop, index1) in bookshop">
 		<dd v-if="index1==0" v-for="(category, index2) in shop.categories">
-			{{index1}}:{{shop.name}} -- {{index2}}:{{category.name}}
+			<dl v-for="(book, index3) in category.books">
+				{{index1}}:{{shop.name}} -- {{index2}}:{{category.name}} -- {{book.name}} 共{{book.pages}}页 {{book.author?"[作者:"+book.author+"]":''}}{{book.wordCount?"[字数:"+book.wordCount+"]":''}}
+			</dl>
 		</dd>
 
 		<p v-if="index1 == 0" >{{data}}</p>
@@ -43,11 +44,11 @@
 		<dd v-for="(category, index2) in shop.categories">
 			{{index1}}:{{shop.name}} - {{index2}}:{{category.name}}
 		</dd>
+
+		<div v-bind:class="{ active: index1===0 }">I have class Active</div>
+		<div v-bind:style="styleObject">styleObject</div>
 	</li>
 </ul>
-
-
-
 </script>
 
 <script src="TemplateEngine.js"></script>
@@ -55,7 +56,7 @@
 var TemplateEngine = new TemplateEngine("{{","}}");
 
 var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {
-	data:"hello world",type:"C",
+	data:"hello world",type:"D",
 	isActive:true, 
 	hasError: false,  
 	styleObject: {
