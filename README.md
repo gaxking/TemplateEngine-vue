@@ -151,4 +151,4 @@ var tpl = TemplateEngine(document.getElementById("tpl").innerHTML, {
 });
  
 ```
-[demo](http://www.luoyongjie.cn/mygit/TemplateEngine-vue/)
+[运行DEMO](http://www.luoyongjie.cn/mygit/TemplateEngine-vue/)
